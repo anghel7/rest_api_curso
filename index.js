@@ -1,24 +1,38 @@
-const express = require('express')
-const path = require('path')
-const PORT = process.env.PORT || 5000
-const Sequelize = require('sequelize');
+const express = require("express");
+const bodyParser = require("body-parser");
+const cors = require("cors");
 
-const db = process.env.DATABASE_URL || 'postgres://postgres:postgres@localhost:5432/curso_angular';
+const app = express();
 
-const sequelize = new Sequelize(db);
+var corsOptions = {
+  origin: "http://localhost:8081"
+};
 
-express()
-  .use(express.static(path.join(__dirname, 'public')))
-  .set('views', path.join(__dirname, 'views'))
-  .set('view engine', 'ejs')
-  .get('/', (req, res) => res.render('pages/index'))
-  .listen(PORT, () => console.log(`Listening on ${PORT}`))
+app.use(cors(corsOptions));
 
-sequelize
-  .authenticate()
-  .then(() => {
-    console.log('Connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
+// parse requests of content-type - application/json
+app.use(bodyParser.json());
+
+// parse requests of content-type - application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: true }));
+
+const db = require("./app/models");
+
+db.sequelize.sync();
+// // drop the table if it already exists
+// db.sequelize.sync({ force: true }).then(() => {
+//   console.log("Drop and re-sync db.");
+// });
+
+// simple route
+app.get("/", (req, res) => {
+  res.json({ message: "Welcome to bezkoder application." });
+});
+
+require("./app/routes/turorial.routes")(app);
+
+// set port, listen for requests
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}.`);
+});
